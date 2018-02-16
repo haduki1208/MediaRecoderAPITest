@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+
+<body>
+    <dt>controller</dt>
+    <dd>
+        <button id="record">record</button>
+        <button id="stop">stop</button>
+    </dd>
+    <dt>video</dt>
+    <dd>
+        <video autoplay></video>
+    </dd>
+
+    <script>
+        (function () {
+            if (!navigator.getUserMedia) {
+                throw new Error('getUserMedia not supported on your browser!');
+                return false;
+            };
+            console.log('getUserMedia supported.');
+
+            // recording
+            navigator.mediaDevices.getUserMedia({
+                audio: true,
+                video: {
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 },
+                    frameRate: { ideal: 5 }
+                }
+            }).then(stream => {
+                const mediaRecorder = new MediaRecorder(stream);
+
+                document.querySelector("#record").onclick = function () {
+                    mediaRecorder.start();
+                    console.log("recorder started");
+                }
+
+                document.querySelector("#stop").onclick = function () {
+                    mediaRecorder.stop();
+                    console.log("recorder stopped");
+                }
+
+                mediaRecorder.ondataavailable = function (e) {
+                    console.log("data available after MediaRecorder.stop() called.");
+                    const formData = new FormData();
+                    formData.append("webm", e.data);
+
+                    fetch("/fileUpload", {
+                        method: 'POST',
+                        body: formData
+                    })
+                        .then(res => res.json())
+                        .then(json => {
+                            console.log(json);
+                        });
+                }
+            }).catch(err => {
+                console.log('The following gUM error occured: ' + err);
+            });
+
+        })();
+    </script>
+</body>
+
+</html>
